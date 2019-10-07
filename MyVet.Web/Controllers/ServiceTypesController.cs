@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -11,23 +10,22 @@ using MyVet.Web.Data.Entities;
 
 namespace MyVet.Web.Controllers
 {
-    [Authorize(Roles = "Admin")]
-    public class AgendasController : Controller
+    public class ServiceTypesController : Controller
     {
         private readonly DataContext _context;
 
-        public AgendasController(DataContext context)
+        public ServiceTypesController(DataContext context)
         {
             _context = context;
         }
 
-        // GET: Agendas
+        // GET: ServiceTypes
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Agendas.ToListAsync());
+            return View(await _context.ServiceTypes.ToListAsync());
         }
 
-        // GET: Agendas/Details/5
+        // GET: ServiceTypes/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -35,39 +33,39 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var agenda = await _context.Agendas
+            var serviceType = await _context.ServiceTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (agenda == null)
+            if (serviceType == null)
             {
                 return NotFound();
             }
 
-            return View(agenda);
+            return View(serviceType);
         }
 
-        // GET: Agendas/Create
+        // GET: ServiceTypes/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Agendas/Create
+        // POST: ServiceTypes/Create
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Date,Remarks,IsAvailable")] Agenda agenda)
+        public async Task<IActionResult> Create([Bind("Id,Name")] ServiceType serviceType)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(agenda);
+                _context.Add(serviceType);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(agenda);
+            return View(serviceType);
         }
 
-        // GET: Agendas/Edit/5
+        // GET: ServiceTypes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -75,22 +73,22 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var agenda = await _context.Agendas.FindAsync(id);
-            if (agenda == null)
+            var serviceType = await _context.ServiceTypes.FindAsync(id);
+            if (serviceType == null)
             {
                 return NotFound();
             }
-            return View(agenda);
+            return View(serviceType);
         }
 
-        // POST: Agendas/Edit/5
+        // POST: ServiceTypes/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Date,Remarks,IsAvailable")] Agenda agenda)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name")] ServiceType serviceType)
         {
-            if (id != agenda.Id)
+            if (id != serviceType.Id)
             {
                 return NotFound();
             }
@@ -99,12 +97,12 @@ namespace MyVet.Web.Controllers
             {
                 try
                 {
-                    _context.Update(agenda);
+                    _context.Update(serviceType);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!AgendaExists(agenda.Id))
+                    if (!ServiceTypeExists(serviceType.Id))
                     {
                         return NotFound();
                     }
@@ -115,10 +113,10 @@ namespace MyVet.Web.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(agenda);
+            return View(serviceType);
         }
 
-        // GET: Agendas/Delete/5
+        // GET: ServiceTypes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -126,30 +124,30 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var agenda = await _context.Agendas
+            var serviceType = await _context.ServiceTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (agenda == null)
+            if (serviceType == null)
             {
                 return NotFound();
             }
 
-            return View(agenda);
+            return View(serviceType);
         }
 
-        // POST: Agendas/Delete/5
+        // POST: ServiceTypes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var agenda = await _context.Agendas.FindAsync(id);
-            _context.Agendas.Remove(agenda);
+            var serviceType = await _context.ServiceTypes.FindAsync(id);
+            _context.ServiceTypes.Remove(serviceType);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool AgendaExists(int id)
+        private bool ServiceTypeExists(int id)
         {
-            return _context.Agendas.Any(e => e.Id == id);
+            return _context.ServiceTypes.Any(e => e.Id == id);
         }
     }
 }

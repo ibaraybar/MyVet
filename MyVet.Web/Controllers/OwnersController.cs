@@ -18,7 +18,7 @@ namespace MyVet.Web.Controllers
     [Authorize(Roles = "Admin")]
     public class OwnersController : Controller
     {
-        private readonly DataContext _context;
+        private readonly DataContext _dataContext;
         private readonly IUserHelper _userHelper;
         private readonly ICombosHelper _combosHelper;
         private readonly IConverterHelper _converterHelper;
@@ -31,7 +31,7 @@ namespace MyVet.Web.Controllers
             IConverterHelper converterHelper,
             IImageHelper imageHelper)
         {
-            _context = context;
+            _dataContext = context;
             _userHelper = userHelper;
             _combosHelper = combosHelper;
             _converterHelper = converterHelper;
@@ -41,7 +41,7 @@ namespace MyVet.Web.Controllers
         // GET: Owners
         public IActionResult Index()
         {
-            return View(_context.Owners
+            return View(_dataContext.Owners
                 .Include(o => o.User)
                 .Include(o => o.Pets));
         }
@@ -54,7 +54,7 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var owner = await _context.Owners
+            var owner = await _dataContext.Owners
                 .Include(o => o.User)
                 .Include(o => o.Pets)
                 .ThenInclude(p => p.PetType)
@@ -89,7 +89,6 @@ namespace MyVet.Web.Controllers
                     FirstName = model.FirstName,
                     LastName = model.LastName,
                     PhoneNumber = model.PhoneNumber,
-                    CellPhone = model.CellPhone,
                     UserName = model.Username
                 };
 
@@ -106,11 +105,11 @@ namespace MyVet.Web.Controllers
                         User = userInDb
                     };
 
-                    _context.Owners.Add(owner);
+                    _dataContext.Owners.Add(owner);
 
                     try
                     {
-                        await _context.SaveChangesAsync();
+                        await _dataContext.SaveChangesAsync();
                         return RedirectToAction(nameof(Index));
                     }
                     catch (Exception ex)
@@ -133,7 +132,7 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var owner = await _context.Owners.FindAsync(id);
+            var owner = await _dataContext.Owners.FindAsync(id);
             if (owner == null)
             {
                 return NotFound();
@@ -157,8 +156,8 @@ namespace MyVet.Web.Controllers
             {
                 try
                 {
-                    _context.Update(owner);
-                    await _context.SaveChangesAsync();
+                    _dataContext.Update(owner);
+                    await _dataContext.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -184,7 +183,7 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var owner = await _context.Owners
+            var owner = await _dataContext.Owners
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (owner == null)
             {
@@ -199,15 +198,15 @@ namespace MyVet.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var owner = await _context.Owners.FindAsync(id);
-            _context.Owners.Remove(owner);
-            await _context.SaveChangesAsync();
+            var owner = await _dataContext.Owners.FindAsync(id);
+            _dataContext.Owners.Remove(owner);
+            await _dataContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool OwnerExists(int id)
         {
-            return _context.Owners.Any(e => e.Id == id);
+            return _dataContext.Owners.Any(e => e.Id == id);
         }
 
         public async Task<IActionResult> AddPet(int? id)
@@ -217,7 +216,7 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var owner = await _context.Owners.FindAsync(id.Value);
+            var owner = await _dataContext.Owners.FindAsync(id.Value);
             if (owner == null)
             {
                 return NotFound();
@@ -245,12 +244,13 @@ namespace MyVet.Web.Controllers
                     newImage = await _imageHelper.UploadImageAsync(model.ImageFile);
                 }
 
-                var pet = await _converterHelper.ToPetAsync(model, newImage);
-                _context.Pets.Add(pet);
-                await _context.SaveChangesAsync();
+                var pet = await _converterHelper.ToPetAsync(model, newImage, true);
+                _dataContext.Pets.Add(pet);
+                await _dataContext.SaveChangesAsync();
                 return RedirectToAction($"Details/{model.OwnerId}");
             }
 
+            model.PetTypes = _combosHelper.GetComboPetTypes();
             return View(model);
         }
 
@@ -261,7 +261,7 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var pet = await _context.Pets
+            var pet = await _dataContext.Pets
                 .Include(p => p.Owner)
                 .Include(p => p.PetType)
                 .FirstOrDefaultAsync(p => p.Id == id);
@@ -285,13 +285,108 @@ namespace MyVet.Web.Controllers
                     newImage = await _imageHelper.UploadImageAsync(model.ImageFile);
                 }
 
-                var pet = await _converterHelper.ToPetAsync(model, newImage);
-                _context.Pets.Update(pet);
-                await _context.SaveChangesAsync();
+                var pet = await _converterHelper.ToPetAsync(model, newImage, false);
+                _dataContext.Pets.Update(pet);
+                await _dataContext.SaveChangesAsync();
                 return RedirectToAction($"Details/{model.OwnerId}");
             }
 
+            model.PetTypes = _combosHelper.GetComboPetTypes();
             return View(model);
         }
+
+        public async Task<IActionResult> DetailsPet(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var pet = await _dataContext.Pets
+                .Include(p => p.Owner)
+                .ThenInclude(o => o.User)
+                .Include(p => p.Histories)
+                .ThenInclude(h => h.ServiceType)
+                .FirstOrDefaultAsync(o => o.Id == id.Value);
+            if (pet == null)
+            {
+                return NotFound();
+            }
+
+            return View(pet);
+        }
+
+        public async Task<IActionResult> AddHistory(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var pet = await _dataContext.Pets.FindAsync(id.Value);
+            if (pet == null)
+            {
+                return NotFound();
+            }
+
+            var model = new HistoryViewModel
+            {
+                Date = DateTime.Now,
+                PetId = pet.Id,
+                ServiceTypes = _combosHelper.GetComboServiceTypes(),
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddHistory(HistoryViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var history = await _converterHelper.ToHistoryAsync(model, true);
+                _dataContext.Histories.Add(history);
+                await _dataContext.SaveChangesAsync();
+                return RedirectToAction($"{nameof(DetailsPet)}/{model.PetId}");
+            }
+
+            model.ServiceTypes = _combosHelper.GetComboServiceTypes();
+            return View(model);
+        }
+
+        public async Task<IActionResult> EditHistory(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var history = await _dataContext.Histories
+                .Include(h => h.Pet)
+                .Include(h => h.ServiceType)
+                .FirstOrDefaultAsync(p => p.Id == id.Value);
+            if (history == null)
+            {
+                return NotFound();
+            }
+
+            return View(_converterHelper.ToHistoryViewModel(history));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditHistory(HistoryViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var history = await _converterHelper.ToHistoryAsync(model, false);
+                _dataContext.Histories.Update(history);
+                await _dataContext.SaveChangesAsync();
+                return RedirectToAction($"{nameof(DetailsPet)}/{model.PetId}");
+            }
+
+            model.ServiceTypes = _combosHelper.GetComboServiceTypes();
+            return View(model);
+        }
+
     }
 }

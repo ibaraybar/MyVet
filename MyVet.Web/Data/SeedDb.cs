@@ -23,8 +23,8 @@ namespace MyVet.Web.Data
         {
             await _dataContext.Database.EnsureCreatedAsync();
             await CheckRoles();
-            var manager = await CheckUserAsync("1010", "Ivan", "Baraybar", "ibaraybard@gmail.com", "350 634 2747", "Calle Luna Calle Sol", "Admin");
-            var customer = await CheckUserAsync("2020", "Ivan", "Baraybar", "ibaraybar@hotmail.com", "350 634 2747", "Calle Luna Calle Sol", "Customer");
+            var manager = await CheckUserAsync("40089980", "Ivan", "Baraybar", "ibaraybard@gmail.com", "350 634 2747", "Calle Luna Calle Sol", "Admin");
+            var customer = await CheckUserAsync("40089981", "Ivan", "Baraybar", "ibaraybar@hotmail.com", "350 634 2747", "Calle Luna Calle Sol", "Customer");
             await CheckPetTypesAsync();
             await CheckServiceTypesAsync();
             await CheckOwnerAsync(customer);
@@ -54,8 +54,7 @@ namespace MyVet.Web.Data
                     UserName = email,
                     PhoneNumber = phone,
                     Address = address,
-                    Document = document,
-                    CellPhone = ""
+                    Document = document
                 };
 
                 await _userHelper.AddUserAsync(user, "123456");
@@ -94,6 +93,7 @@ namespace MyVet.Web.Data
             {
                 _dataContext.PetTypes.Add(new PetType { Name = "Perro" });
                 _dataContext.PetTypes.Add(new PetType { Name = "Gato" });
+                _dataContext.PetTypes.Add(new PetType { Name = "Cerdo" });
                 await _dataContext.SaveChangesAsync();
             }
         }

@@ -56,7 +56,7 @@ namespace MyVet.Common.Services
             }
         }
 
-        public async Task<Response> GetOwnerByEmail(
+        public async Task<Response> GetOwnerByEmailAsync(
             string urlBase,
             string servicePrefix,
             string controller,

@@ -23,8 +23,11 @@
             VerticalOptions="CenterAndExpand"
             IsRunning="{Binding IsRunning}"/>
         <Button
+            BackgroundColor="Navy"
+            CornerRadius="23"
             IsEnabled="{Binding IsEnabled}"
             Command="{Binding LoginCommand}"
-            Text="Login"/>
-    </StackLayout>  
+            Text="Login"
+            TextColor="White"/>
+    </StackLayout>
 </ContentPage>
